@@ -64,7 +64,18 @@ void main() async {
     print('>> Configurando remote origin...');
     // Se intenta remover si es que ya existe un origin configurado antes
     await Process.run('git', ['remote', 'remove', 'origin']);
-    var remoteResult = await Process.run('git', ['remote', 'add', 'origin', repoLink.trim()]);
+    
+    // Extraer el usuario de la url para forzar el inicio de sesión correcto en computadoras compartidas
+    String finalRepoLink = repoLink.trim();
+    if (finalRepoLink.startsWith('https://github.com/')) {
+      var parts = finalRepoLink.substring('https://github.com/'.length).split('/');
+      if (parts.isNotEmpty) {
+        String username = parts[0];
+        finalRepoLink = 'https://$username@github.com/$username/${parts[1]}';
+      }
+    }
+
+    var remoteResult = await Process.run('git', ['remote', 'add', 'origin', finalRepoLink]);
     if (remoteResult.exitCode != 0) {
       print('Error al agregar el remote origin: ${remoteResult.stderr}');
       return;
